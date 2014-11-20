@@ -18,13 +18,13 @@ typedef struct Block
 	Position position;
 } Block;
 
-typedef int Canvas[CANVAS_WIDTH][CANVAS_HEIGHT];
+typedef int Canvas[CANVAS_WIDTH + 1][CANVAS_HEIGHT + 1];
 
 Canvas canvas;
 int timer = 0;
 int inGame = 1;
 int points = 0;
-int wait = 500;
+int wait = 100000;
 int currentBlockInBatch = 0;
 
 Block currentBlock;
@@ -37,18 +37,17 @@ int checkFullRow(int x, int y);
 void moveLeft();
 void moveDown();
 void moveRight();
-void spawnBlock();
 void resetBlock();
+void renderBlock();
 void rotateBlock();
 void createFrame();
 void checkCanvas();
 void renderCanvas();
 void spawnNewBlock();
 void fetchUserInput();
-void createNewBatch();
+void printCanvasBlocks();
+void createNewBlockBatch();
 void setBlockInCanvas();
-void printCanvasWithValues();
-void resetBlockValues(int x, int y);
 void moveRowsAbove(int completedRow);
 
 Block createBlock(int blockNumber);
@@ -56,15 +55,13 @@ Block createBlock(int blockNumber);
 int main(int argc, char ** argv)
 {
 	createFrame();
-	createNewBatch();
-	printCanvasWithValues();
+	createNewBlockBatch();
 	renderCanvas();
 
-//	sleep(25);
-	while (/*1==2)//*/inGame)
+	while (inGame)
 	{
 		spawnNewBlock();
-//		checkCanvas();
+		checkCanvas();
 
 		fetchUserInput();
 
@@ -84,8 +81,8 @@ int main(int argc, char ** argv)
 void renderCanvas()
 {
 	clear();
-	printCanvasWithValues();
-	spawnBlock();
+	printCanvasBlocks();
+	renderBlock();
 	refresh();
 }
 
@@ -101,22 +98,23 @@ void createFrame()
 
 void checkCanvas()
 {
-	int i, j;
+	int x, y;
 	int isFullLine = 0;
 
-	for (j = 1; j <= CANVAS_HEIGHT; j++)
+	if (isGameMoving() == 0)
 	{
-		for (i = 1; i <= CANVAS_WIDTH; i++)
+		for (y = 1; y <= CANVAS_HEIGHT; y++)
 		{
-			isFullLine = checkFullRow(i, j);
-		}
+			for (x = 1; x <= CANVAS_WIDTH; x++)
+			{
+				isFullLine = checkFullRow(x, y);
+			}
 
-		if (isGameMoving() == 0 && isFullLine == 1)
-		{
-			moveRowsAbove(j);
+			if (isFullLine != 0)
+			{
+				moveRowsAbove(y);
+			}
 		}
-
-		printw("\n");
 	}
 }
 
@@ -129,28 +127,33 @@ int checkFullRow(int x, int y)
 	return 0;
 }
 
-void printCanvasWithValues()
+void printCanvasBlocks()
 {
 	int x, y;
-
+	
 	for (y = 0; y <= CANVAS_HEIGHT + 1; y++)
 	{
 		for (x = 0; x <= CANVAS_WIDTH + 1; x++)
 		{
-				if (y == 0 || y == CANVAS_HEIGHT + 1) {
+			if (y == 0 || y == CANVAS_HEIGHT + 1)
+			{
 				canvas[x][y] = 1;
-				printw("#");
-			} else if (x == 0 || x == CANVAS_WIDTH + 1) {
+				mvprintw(y, x, "0");
+			} else if (x == 0 || x == CANVAS_WIDTH + 1)
+			{
 				canvas[x][y] = 1;
-				printw("|");
-			} else if (canvas[x][y] != 0) {
-				printw("X");
-			} else {
-				canvas[x][y] = 0;
-				printw(" ");
+				mvprintw(y, x, "0");
+			} else
+			{
+				if (canvas[x][y] == 0)
+				{
+					mvprintw(y, x,  "-");
+				}else
+				{
+					mvprintw(y, x, "X");
+				}
 			}
 		}
-		printw("\n");
 	}
 }
 
@@ -233,7 +236,7 @@ int isCollision()
 
 /* Block logic */
 
-void createNewBatch()
+void createNewBlockBatch()
 {
 	int i;
 	Block tempBlock;
@@ -246,7 +249,6 @@ void createNewBatch()
 		}
 		while (tempBlock.blockType ==
 				blockBatch[i].blockType);
-		
 		blockBatch[i] = tempBlock;
 	}
 }
@@ -257,7 +259,7 @@ void spawnNewBlock()
 	{
 		if (currentBlockInBatch >= 6)
 		{
-			createNewBatch();
+			createNewBlockBatch();
 			currentBlockInBatch = 0;
 		}
 		currentBlock = blockBatch[currentBlockInBatch];
@@ -277,18 +279,12 @@ void setBlockInCanvas()
 			{
 				canvas[currentBlock.position.x + x]
 					[currentBlock.position.y + y] = 1;
-				resetBlockValues(x, y);
 			}
 		}
 	}
 }
 
-void resetBlockValues(int x, int y)
-{
-	currentBlock.blockType[x][y] = 0;
-}
-
-void spawnBlock()
+void renderBlock()
 {
 	int x, y;
 	
@@ -404,7 +400,7 @@ void resetBlock()
 		{
 			if (currentBlock.blockType[x][y] != 0)
 			{
-				resetBlockValues(x, y);
+				currentBlock.blockType[x][y] = 0;
 			}
 		}
 	}

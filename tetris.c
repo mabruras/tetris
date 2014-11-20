@@ -60,15 +60,15 @@ int main(int argc, char ** argv)
 
 	while (inGame)
 	{
-		spawnNewBlock();
 		checkCanvas();
+		spawnNewBlock();
 
 		fetchUserInput();
 
 		if(timer++ % 10 == 0) {
 			moveDown();
 		}
-
+		
 		renderCanvas();
 		usleep(100000);
 	}
@@ -82,7 +82,7 @@ void renderCanvas()
 {
 	clear();
 	printCanvasBlocks();
-	renderBlock();
+	renderBlock(); 
 	refresh();
 }
 
@@ -107,24 +107,19 @@ void checkCanvas()
 		{
 			for (x = 1; x <= CANVAS_WIDTH; x++)
 			{
-				isFullLine = checkFullRow(x, y);
+				if (canvas[x][y] != 0)
+				{
+					isFullLine++;
+				}
 			}
 
-			if (isFullLine != 0)
+			if (isFullLine == CANVAS_WIDTH)
 			{
 				moveRowsAbove(y);
 			}
+			isFullLine = 0;
 		}
 	}
-}
-
-int checkFullRow(int x, int y)
-{
-	if (canvas[x][y] != 0)
-	{
-		return 1;
-	} 
-	return 0;
 }
 
 void printCanvasBlocks()
@@ -138,16 +133,16 @@ void printCanvasBlocks()
 			if (y == 0 || y == CANVAS_HEIGHT + 1)
 			{
 				canvas[x][y] = 1;
-				mvprintw(y, x, "0");
+				mvprintw(y, x, "#");
 			} else if (x == 0 || x == CANVAS_WIDTH + 1)
 			{
 				canvas[x][y] = 1;
-				mvprintw(y, x, "0");
+				mvprintw(y, x, "|");
 			} else
 			{
 				if (canvas[x][y] == 0)
 				{
-					mvprintw(y, x,  "-");
+					mvprintw(y, x,  " ");
 				}else
 				{
 					mvprintw(y, x, "X");

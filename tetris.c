@@ -47,23 +47,24 @@ void spawnNewBlock();
 void fetchUserInput();
 void createNewBatch();
 void setBlockInCanvas();
+void printCanvasWithValues();
 void resetBlockValues(int x, int y);
 void moveRowsAbove(int completedRow);
-void printCanvasWithValues(int x, int y);
 
 Block createBlock(int blockNumber);
 
 int main(int argc, char ** argv)
 {
 	createFrame();
-
-	checkCanvas();
 	createNewBatch();
-	
-	while (inGame)
+	printCanvasWithValues();
+	renderCanvas();
+
+//	sleep(25);
+	while (/*1==2)//*/inGame)
 	{
 		spawnNewBlock();
-		checkCanvas(); // CompletedRows && PrintCanvas
+//		checkCanvas();
 
 		fetchUserInput();
 
@@ -72,7 +73,7 @@ int main(int argc, char ** argv)
 		}
 
 		renderCanvas();
-		timeout(500);
+		usleep(100000);
 	}
 
 	endwin();
@@ -83,7 +84,7 @@ int main(int argc, char ** argv)
 void renderCanvas()
 {
 	clear();
-	checkCanvas();
+	printCanvasWithValues();
 	spawnBlock();
 	refresh();
 }
@@ -103,18 +104,14 @@ void checkCanvas()
 	int i, j;
 	int isFullLine = 0;
 
-	for (j = 0; j <= CANVAS_HEIGHT; j++)
+	for (j = 1; j <= CANVAS_HEIGHT; j++)
 	{
-		for (i = 0; i <= CANVAS_WIDTH; i++)
+		for (i = 1; i <= CANVAS_WIDTH; i++)
 		{
-
 			isFullLine = checkFullRow(i, j);
-			printCanvasWithValues(i, j);
 		}
 
-		/* Remove Row */
-		if (isGameMoving() == 0 
-			&& isFullLine == 1)
+		if (isGameMoving() == 0 && isFullLine == 1)
 		{
 			moveRowsAbove(j);
 		}
@@ -132,18 +129,28 @@ int checkFullRow(int x, int y)
 	return 0;
 }
 
-void printCanvasWithValues(int x, int y)
+void printCanvasWithValues()
 {
-	if (y == 0 || y == CANVAS_HEIGHT + 1) {
-		canvas[x][y] = 1;
-		printw("#");
-	} else if (x == 0 || x == CANVAS_WIDTH + 1) {
-		canvas[x][y] = 1;
-		printw("|");
-	} else if (canvas[x][y] != 0) {
-		printw("X");
-	} else {
-		canvas[x][y] = 0;
+	int x, y;
+
+	for (y = 0; y <= CANVAS_HEIGHT + 1; y++)
+	{
+		for (x = 0; x <= CANVAS_WIDTH + 1; x++)
+		{
+				if (y == 0 || y == CANVAS_HEIGHT + 1) {
+				canvas[x][y] = 1;
+				printw("#");
+			} else if (x == 0 || x == CANVAS_WIDTH + 1) {
+				canvas[x][y] = 1;
+				printw("|");
+			} else if (canvas[x][y] != 0) {
+				printw("X");
+			} else {
+				canvas[x][y] = 0;
+				printw(" ");
+			}
+		}
+		printw("\n");
 	}
 }
 
@@ -161,12 +168,12 @@ void moveRowsAbove(int completedRow)
 
 int isGameMoving()
 {
-	int i, j;
-	for (i = 0; i < 3; i++)
+	int x, y;
+	for (x = 0; x < 3; x++)
 	{
-		for (j = 0; j < 3; j++)
+		for (y = 0; y < 3; y++)
 		{
-			if (currentBlock.blockType[i][j] != 0)
+			if (currentBlock.blockType[x][y] != 0)
 			{
 				return 1;
 			}

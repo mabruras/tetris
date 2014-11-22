@@ -3,8 +3,17 @@
 #include <stdio.h>
 #include <string.h>
 
+// Mulig lage variabler av disse??
 #define CANVAS_WIDTH 10
 #define CANVAS_HEIGHT 20
+
+#define CANVAS_NEXT_START_Y 1
+#define CANVAS_NEXT_START_X CANVAS_WIDTH + 6
+
+#define CANVAS_SCORE_X CANVAS_NEXT_START_X - 1
+#define CANVAS_SCORE_Y CANVAS_NEXT_START_Y + 10
+
+#define CANVAS_INFO CANVAS_SCORE_X + 20
 
 typedef struct Position
 {
@@ -30,6 +39,7 @@ int currentBlockInBatch = 0;
 
 Block currentBlock;
 Block blockBatch[7]; 
+int bbb[7];
 
 int isCollision();
 int isGameMoving();
@@ -43,6 +53,7 @@ void rotateBlock();
 void renderFrame();
 void createFrame();
 void renderCanvas();
+void drawNextBlock();
 void spawnNewBlock();
 void checkGameState();
 void fetchUserInput();
@@ -116,11 +127,13 @@ void renderFrame()
 void checkGameState()
 {
 	renderFrame();
-
+	renderNextBlockFrame();
+	
 	switch (gameState)
 	{
 	case 0: // Game play
 		printCanvasBlocks();
+		drawNextBlock();
 		renderBlock();
 		break;
 	case 1: // Game pause
@@ -130,28 +143,129 @@ void checkGameState()
 		drawGameOverScreen();
 		break;
 	}
-	//drawInstructions();
-	//drawScoreboard();
+	
+	drawInstructions();
+	drawScoreboard();
+}
+
+void drawInstructions()
+{
+	mvprintw(1, CANVAS_INFO
+		, "      * INFORMATION *");
+	mvprintw(2, CANVAS_INFO
+		, "*****************************");
+	mvprintw(3, CANVAS_INFO
+		, "|>  KEY UP = Rotate        <|");
+	mvprintw(4, CANVAS_INFO
+		, "|>  KEY DOWN = Speed up    <|");
+	mvprintw(5, CANVAS_INFO
+		, "|>  KEY LEFT = Move left   <|");
+	mvprintw(6, CANVAS_INFO
+		, "|>  KEY RIGHT = Move right <|");
+	mvprintw(7, CANVAS_INFO
+		, "|>  'r' = Restart game     <|");
+	mvprintw(8, CANVAS_INFO
+		, "|>  'p' = Pause game       <|");
+	mvprintw(9, CANVAS_INFO
+		, "|>  'q' = Quit             <|");
+	mvprintw(10, CANVAS_INFO
+		, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+	
+}
+
+void drawNextBlock()
+{
+	int x, y;
+	if (currentBlockInBatch == 6)
+	{
+		mvprintw(4, CANVAS_NEXT_START_X + 4, "??");
+	} else
+	{
+		for (x = 0; x < 3; x++)
+		{
+			for (y = 0; y < 3; y++)
+			{
+				if (blockBatch[currentBlockInBatch]
+					.blockType[x][y] == 1)
+				{
+					mvprintw(y + 3, 
+						CANVAS_NEXT_START_X + x + 3
+						, "X");
+				}
+			}
+		}
+	}
+}
+
+void renderNextBlockFrame()
+{
+	int i;
+
+	mvprintw(CANVAS_NEXT_START_Y
+		, CANVAS_NEXT_START_X
+		, " * NEXT *");
+	mvprintw(CANVAS_NEXT_START_Y + 1
+		, CANVAS_NEXT_START_X
+		, "**********");
+	
+	for (i = 0; i < 3; i++)
+	{
+		mvprintw(i + 3
+			, CANVAS_NEXT_START_X
+			, "|>");
+		mvprintw(i + 3
+			, CANVAS_NEXT_START_X + 8
+			, "<|");
+	}
+
+	mvprintw(6
+		, CANVAS_NEXT_START_X
+		, "^^^^^^^^^^");
+}
+
+void drawScoreboard()
+{
+	mvprintw(CANVAS_SCORE_Y
+		, CANVAS_SCORE_X
+		, "  * SCORE *");
+	mvprintw(CANVAS_SCORE_Y + 1
+		, CANVAS_SCORE_X
+		, "*************");
+	mvprintw(CANVAS_SCORE_Y + 2
+		, CANVAS_SCORE_X
+		, "|>         <|");
+	mvprintw(CANVAS_SCORE_Y + 2
+		, CANVAS_SCORE_X + 2
+		, points + "");
+	mvprintw(CANVAS_SCORE_Y + 3
+		, CANVAS_SCORE_X
+		, "^^^^^^^^^^^^^");
 }
 
 void drawPauseScreen()
 {
-	mvprintw(CANVAS_HEIGHT / 2, 0
-		, "|±±±±±±±±±±|");
-	mvprintw(CANVAS_HEIGHT / 2 + 1, 0
-		, "|¥ PAUSE  ¥|");
-	mvprintw(CANVAS_HEIGHT / 2 + 2, 0
-		, "|¥¥¥¥¥¥¥¥¥¥|");
+	mvprintw(CANVAS_HEIGHT / 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
+	mvprintw(CANVAS_HEIGHT / 2 + 1
+		, (CANVAS_WIDTH / 2) - 4
+		, "* PAUSE  *");
+	mvprintw(CANVAS_HEIGHT / 2 + 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
 }
 
 void drawGameOverScreen()
 {
-	mvprintw(CANVAS_HEIGHT / 2, 0
-		, "|±±±±±±±±±±|");
-	mvprintw(CANVAS_HEIGHT / 2 + 1, 0
-		, "|GAME OVER!|");
-	mvprintw(CANVAS_HEIGHT / 2 + 2, 0
-		, "|¥¥¥¥¥¥¥¥¥¥|");
+	mvprintw(CANVAS_HEIGHT / 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
+	mvprintw(CANVAS_HEIGHT / 2 + 1
+		, (CANVAS_WIDTH / 2) - 4
+		, "GAME OVER!");
+	mvprintw(CANVAS_HEIGHT / 2 + 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
 }
 
 void createFrame()
@@ -168,7 +282,8 @@ void checkRowCompletion()
 {
 	int x, y;
 	int isFullLine = 0;
-
+	int rowCount = 0;
+	
 	if (isGameMoving() == 0)
 	{
 		for (y = 1; y <= CANVAS_HEIGHT; y++)
@@ -183,10 +298,28 @@ void checkRowCompletion()
 
 			if (isFullLine == CANVAS_WIDTH)
 			{
+				rowCount++;
 				moveRowsAbove(y);
 			}
 			isFullLine = 0;
 		}
+		updateScore(rowCount);
+	}
+}
+
+void updateScore(int rows)
+{
+	int i;
+	for (i = 1; i <= rows; i++)
+	{
+		points += CANVAS_WIDTH * i;
+	}
+	if (wait < 10001)
+	{
+		wait = 10000;
+	} else
+	{
+		wait -= 1000;
 	}
 }
 
@@ -262,7 +395,7 @@ void fetchUserInput()
 				break;
 
 			case 'p':
-					gameState = 1;
+				gameState = 1;
 				break;
 		}
 	} else {
@@ -382,6 +515,7 @@ void rotateBlock()
 {
 	int i, j;
 	Block tempBlock = currentBlock;
+
 	for (i = 0; i < 3; i++)
 	{
 		for (j = 0; j < 3; j++)
@@ -401,46 +535,46 @@ Block createBlock(int blockNumber)
 	switch (blockNumber)
 	{
 	case 0:
-		b[0][0] = 0;	b[0][1] = 1;	b[0][2] = 0;	// .#.
-		b[1][0] = 0;	b[1][1] = 1;	b[1][2] = 0;	// .#.
-		b[2][0] = 0;	b[2][1] = 1;	b[2][2] = 0;	// .#.
+		b[0][0] = 0;	b[1][0] = 1;	b[2][0] = 0;	// .#.
+		b[0][1] = 0;	b[1][1] = 1;	b[2][1] = 0;	// .#.
+		b[0][2] = 0;	b[1][2] = 1;	b[2][2] = 0;	// .#.
 		break;
 	case 1:
-		b[0][0] = 0;	b[0][1] = 0;	b[0][2] = 0;	// ...
-		b[1][0] = 0;	b[1][1] = 1;	b[1][2] = 0;	// .#.
-		b[2][0] = 1;	b[2][1] = 1;	b[2][2] = 1;	// ###
+		b[0][0] = 0;	b[1][0] = 0;	b[2][0] = 0;	// ...
+		b[0][1] = 0;	b[1][1] = 1;	b[2][1] = 0;	// .#.
+		b[0][2] = 1;	b[1][2] = 1;	b[2][2] = 1;	// ###
 		break;
 	case 2:
-		b[0][0] = 0;	b[0][1] = 0;	b[0][2] = 0;	// ...
-		b[1][0] = 0;	b[1][1] = 1;	b[1][2] = 1;	// .##
-		b[2][0] = 0;	b[2][1] = 1;	b[2][2] = 1;	// .##
+		b[0][0] = 0;	b[1][0] = 0;	b[2][0] = 0;	// ...
+		b[0][1] = 0;	b[1][1] = 1;	b[2][1] = 1;	// .##
+		b[0][2] = 0;	b[1][2] = 1;	b[2][2] = 1;	// .##
 		break;
 	case 3:
-		b[0][0] = 0;	b[0][1] = 0;	b[0][2] = 0;	// ...
-		b[1][0] = 1;	b[1][1] = 1;	b[1][2] = 0;	// ##.
-		b[2][0] = 0;	b[2][1] = 1;	b[2][2] = 1;	// .##
+		b[0][0] = 0;	b[1][0] = 0;	b[2][0] = 0;	// ...
+		b[0][1] = 1;	b[1][1] = 1;	b[2][1] = 0;	// ##.
+		b[0][2] = 0;	b[1][2] = 1;	b[2][2] = 1;	// .##
 		break;
 	case 4:	
-		b[0][0] = 0;	b[0][1] = 0;	b[0][2] = 0;	// ...
-		b[1][0] = 0;	b[1][1] = 1;	b[1][2] = 1;	// .##
-		b[2][0] = 1;	b[2][1] = 1;	b[2][2] = 0;	// ##.
+		b[0][0] = 0;	b[1][0] = 0;	b[2][0] = 0;	// ...
+		b[0][1] = 0;	b[1][1] = 1;	b[2][1] = 1;	// .##
+		b[0][2] = 1;	b[1][2] = 1;	b[2][2] = 0;	// ##.
 		break;
 	case 5:	
-		b[0][0] = 0;	b[0][1] = 0;	b[0][2] = 1;	// ..#
-		b[1][0] = 0;	b[1][1] = 0;	b[1][2] = 1;	// ..#
-		b[2][0] = 0;	b[2][1] = 1;	b[2][2] = 1;	// .##
+		b[0][0] = 0;	b[1][0] = 1;	b[2][0] = 0;	// .#.
+		b[0][1] = 0;	b[1][1] = 1;	b[2][1] = 0;	// .#.
+		b[0][2] = 1;	b[1][2] = 1;	b[2][2] = 0;	// ##.
 		break;
 	case 6:	
-		b[0][0] = 1;	b[0][1] = 0;	b[0][2] = 0;	// #..
-		b[1][0] = 1;	b[1][1] = 0;	b[1][2] = 0;	// #..
-		b[2][0] = 1;	b[2][1] = 1;	b[2][2] = 0;	// ##.
+		b[0][0] = 0;	b[1][0] = 1;	b[2][0] = 0;	// .#.
+		b[0][1] = 0;	b[1][1] = 1;	b[2][1] = 0;	// .#.
+		b[0][2] = 0;	b[1][2] = 1;	b[2][2] = 1;	// .##
 		break;
 	}
 
 	memcpy(tempBlock.blockType, b, sizeof(Block));
 
 	tempBlock.position.x = (CANVAS_WIDTH / 2) - 1;
-	tempBlock.position.y = 2;
+	tempBlock.position.y = 1;
 	
 	return tempBlock;
 }

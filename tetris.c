@@ -8,10 +8,10 @@
 #define CANVAS_HEIGHT 20
 
 #define CANVAS_NEXT_START_Y 1
-#define CANVAS_NEXT_START_X CANVAS_WIDTH + 6
+#define CANVAS_NEXT_START_X CANVAS_WIDTH + 7
 
 #define CANVAS_SCORE_X CANVAS_NEXT_START_X - 1
-#define CANVAS_SCORE_Y CANVAS_NEXT_START_Y + 10
+#define CANVAS_SCORE_Y CANVAS_NEXT_START_Y + 6
 
 #define CANVAS_INFO CANVAS_SCORE_X + 20
 
@@ -154,21 +154,34 @@ void drawInstructions()
 		, "      * INFORMATION *");
 	mvprintw(2, CANVAS_INFO
 		, "*****************************");
-	mvprintw(3, CANVAS_INFO
-		, "|>  KEY UP = Rotate        <|");
-	mvprintw(4, CANVAS_INFO
-		, "|>  KEY DOWN = Speed up    <|");
-	mvprintw(5, CANVAS_INFO
-		, "|>  KEY LEFT = Move left   <|");
-	mvprintw(6, CANVAS_INFO
-		, "|>  KEY RIGHT = Move right <|");
-	mvprintw(7, CANVAS_INFO
-		, "|>  'r' = Restart game     <|");
+		
+	if (gameState == 0)
+	{
+		mvprintw(3, CANVAS_INFO
+			, "|>     KEY UP = Rotate     <|");
+		mvprintw(4, CANVAS_INFO
+			, "|>   KEY DOWN = Speed up   <|");
+		mvprintw(5, CANVAS_INFO
+			, "|>   KEY LEFT = Move left  <|");
+		mvprintw(6, CANVAS_INFO
+			, "|>  KEY RIGHT = Move right <|");
+		mvprintw(7, CANVAS_INFO
+			, "|>        'p' = Pause game <|");
+	} else
+	{
+		mvprintw(3, CANVAS_INFO
+			, "|>  'p' = Unpause game     <|");
+		mvprintw(4, CANVAS_INFO
+			, "|>  'r' = Restart game     <|");
+		mvprintw(5, CANVAS_INFO
+			, "|>  'q' = Quit             <|");
+		mvprintw(6, CANVAS_INFO
+			, "|>                         <|");
+		mvprintw(7, CANVAS_INFO
+			, "|>                         <|");
+	}
+	
 	mvprintw(8, CANVAS_INFO
-		, "|>  'p' = Pause game       <|");
-	mvprintw(9, CANVAS_INFO
-		, "|>  'q' = Quit             <|");
-	mvprintw(10, CANVAS_INFO
 		, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 	
 }
@@ -178,7 +191,7 @@ void drawNextBlock()
 	int x, y;
 	if (currentBlockInBatch == 6)
 	{
-		mvprintw(4, CANVAS_NEXT_START_X + 4, "??");
+		mvprintw(4, CANVAS_NEXT_START_X + 4, "?");
 	} else
 	{
 		for (x = 0; x < 3; x++)
@@ -206,7 +219,7 @@ void renderNextBlockFrame()
 		, " * NEXT *");
 	mvprintw(CANVAS_NEXT_START_Y + 1
 		, CANVAS_NEXT_START_X
-		, "**********");
+		, "*********");
 	
 	for (i = 0; i < 3; i++)
 	{
@@ -214,13 +227,13 @@ void renderNextBlockFrame()
 			, CANVAS_NEXT_START_X
 			, "|>");
 		mvprintw(i + 3
-			, CANVAS_NEXT_START_X + 8
+			, CANVAS_NEXT_START_X + 7
 			, "<|");
 	}
 
 	mvprintw(6
 		, CANVAS_NEXT_START_X
-		, "^^^^^^^^^^");
+		, "^^^^^^^^^");
 }
 
 void drawScoreboard()
@@ -234,9 +247,11 @@ void drawScoreboard()
 	mvprintw(CANVAS_SCORE_Y + 2
 		, CANVAS_SCORE_X
 		, "|>         <|");
-	mvprintw(CANVAS_SCORE_Y + 2
-		, CANVAS_SCORE_X + 2
-		, points + "");
+	
+	move(CANVAS_SCORE_Y + 2
+		, CANVAS_SCORE_X + 4);
+	printw("%d", points);
+	
 	mvprintw(CANVAS_SCORE_Y + 3
 		, CANVAS_SCORE_X
 		, "^^^^^^^^^^^^^");
@@ -313,13 +328,18 @@ void updateScore(int rows)
 	for (i = 1; i <= rows; i++)
 	{
 		points += CANVAS_WIDTH * i;
+		increaseSpeed();
 	}
+}
+
+void increaseSpeed()
+{
 	if (wait < 10001)
 	{
 		wait = 10000;
 	} else
 	{
-		wait -= 1000;
+		wait -= 500;
 	}
 }
 
@@ -410,6 +430,8 @@ void fetchUserInput()
 			case 'r':
 				// resetGame();
 				break;
+			case 'q':
+				inGame = 0;
 		}
 	}
 

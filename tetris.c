@@ -6,7 +6,7 @@
 // Mulig lage variabler av disse??
 #define CANVAS_WIDTH 10
 #define CANVAS_HEIGHT 20
-#define BLOCK_SIGN "O"
+#define BLOCK_SIGN "@"
 
 #define CANVAS_NEXT_START_Y 1
 #define CANVAS_NEXT_START_X CANVAS_WIDTH + 7
@@ -26,6 +26,7 @@ typedef struct Block
 {
 	int blockType[3][3];
 	Position position;
+	int blockNumber;
 	int color;
 } Block;
 
@@ -80,6 +81,7 @@ void rotateBlock();
 Block createBlock(int blockNumber);
 void resetBlock();
 void createNewBlockBatch();
+int batchContainsBlock(Block b, int iMax);
 void spawnNewBlock();
 void setBlockInCanvas();
 
@@ -252,7 +254,7 @@ void moveRowsAbove(int completedRow)
 	int x, y;
 	for (y = completedRow; y > 1; y--)
 	{
-		for (x = 1; x < CANVAS_WIDTH; x++)
+		for (x = 1; x <= CANVAS_WIDTH; x++)
 		{
 			canvas[x][y] = canvas[x][y-1];
 		}
@@ -443,6 +445,7 @@ Block createBlock(int blockNumber)
 
 	memcpy(tempBlock.blockType, b, sizeof(Block));
 
+	tempBlock.blockNumber = blockNumber;
 	tempBlock.color = blockNumber + 1;
 	tempBlock.position.x = (CANVAS_WIDTH / 2) - 1;
 	tempBlock.position.y = 1;
@@ -477,17 +480,29 @@ void createNewBlockBatch()
 		{
 			tempBlock = createBlock(rand() % 7);
 		}
-		while (tempBlock.blockType ==
-				blockBatch[i].blockType);
+		while (batchContainsBlock(tempBlock, i));
 		blockBatch[i] = tempBlock;
 	}
+}
+
+int batchContainsBlock(Block b, int iMax)
+{
+	int i;
+	for (i = 0; i <= iMax; i++)
+	{
+		if (b.color == blockBatch[i].color)
+		{
+			return 1;
+		}
+	}
+	return 0;
 }
 
 void spawnNewBlock()
 {
 	if (isGameMoving() == 0)
 	{
-		if (currentBlockInBatch >= 6)
+		if (currentBlockInBatch >= 7)
 		{
 			createNewBlockBatch();
 			currentBlockInBatch = 0;
@@ -709,7 +724,7 @@ void drawScoreboard()
 void drawNextBlock()
 {
 	int x, y;
-	if (currentBlockInBatch == 6)
+	if (currentBlockInBatch >= 7)
 	{
 		mvprintw(4, CANVAS_NEXT_START_X + 4, "?");
 	} else
@@ -759,3 +774,4 @@ void drawGameOverScreen()
 		, (CANVAS_WIDTH / 2) - 4
 		, "**********");
 }
+

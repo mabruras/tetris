@@ -38,34 +38,71 @@ int wait = 100000;
 int currentBlockInBatch = 0;
 
 Block currentBlock;
-Block blockBatch[7]; 
-int bbb[7];
+Block blockBatch[7];
 
-int isCollision();
-int isGameMoving();
 
-void moveLeft();
-void moveDown();
-void moveRight();
-void resetBlock();
-void renderBlock();
-void rotateBlock();
-void renderFrame();
-void createFrame();
-void renderCanvas();
-void drawNextBlock();
-void spawnNewBlock();
+/* Game */
+/* Game : Existence */
 void checkGameState();
-void fetchUserInput();
-void drawPauseScreen();
-void setBlockInCanvas();
-void printCanvasBlocks();
-void drawGameOverScreen();
+int isGameMoving();
+void resetGame();
+
+/* Game : Level status */
 void checkRowCompletion();
-void createNewBlockBatch();
+void updateScore(int rows);
+void increaseSpeed();
 void moveRowsAbove(int completedRow);
 
+
+/* User interference */
+/* User interference : key input */
+void fetchUserInput();
+
+
+/* Canvas */
+/* Canvas : map logic */
+int isCollision();
+
+/* Canvas : Existence */
+void resetCanvas();
+
+
+/* Blocks */
+/* Blocks : Movement */
+void moveLeft();
+void moveRight();
+void moveDown();
+void rotateBlock();
+
+/* Blocks : Existence */
 Block createBlock(int blockNumber);
+void resetBlock();
+void createNewBlockBatch();
+void spawnNewBlock();
+void setBlockInCanvas();
+
+
+/* Graphics */
+/* Graphics : Setup */
+void createFrame();
+
+/* Graphics : Canvas content */
+void printCanvasBlocks();
+void renderBlock();
+
+/* Graphics : frames */
+void renderCanvas();
+void renderFrame();
+void drawInstructions();
+void renderNextBlockFrame();
+void drawScoreboard();
+
+/* Graphics : Side content */
+void drawNextBlock();
+
+/* Graphics : Extra screens */
+void drawPauseScreen();
+void drawGameOverScreen();
 
 
 int main(int argc, char ** argv)
@@ -95,34 +132,10 @@ int main(int argc, char ** argv)
 
 	return 0;
 }
- /* Canvas logic */
-void renderCanvas()
-{
-	clear();
-	checkGameState();
-	refresh();
-}
 
-void renderFrame()
-{
-	int x, y;
-	
-	for (y = 0; y <= CANVAS_HEIGHT + 1; y++)
-	{
-		for (x = 0; x <= CANVAS_WIDTH + 1; x++)
-		{
-			if (y == 0 || y == CANVAS_HEIGHT + 1)
-			{
-				canvas[x][y] = 1;
-				mvprintw(y, x, "#");
-			} else if (x == 0 || x == CANVAS_WIDTH + 1)
-			{
-				canvas[x][y] = 1;
-				mvprintw(y, x, "|");
-			}
-		}
-	}
-}
+
+/* Game */
+/* Game : Existence */
 
 void checkGameState()
 {
@@ -148,150 +161,38 @@ void checkGameState()
 	drawScoreboard();
 }
 
-void drawInstructions()
-{
-	mvprintw(1, CANVAS_INFO
-		, "      * INFORMATION *");
-	mvprintw(2, CANVAS_INFO
-		, "*****************************");
-		
-	if (gameState == 0)
-	{
-		mvprintw(3, CANVAS_INFO
-			, "|>     KEY UP = Rotate     <|");
-		mvprintw(4, CANVAS_INFO
-			, "|>   KEY DOWN = Speed up   <|");
-		mvprintw(5, CANVAS_INFO
-			, "|>   KEY LEFT = Move left  <|");
-		mvprintw(6, CANVAS_INFO
-			, "|>  KEY RIGHT = Move right <|");
-		mvprintw(7, CANVAS_INFO
-			, "|>        'p' = Pause game <|");
-	} else
-	{
-		mvprintw(3, CANVAS_INFO
-			, "|>  'p' = Unpause game     <|");
-		mvprintw(4, CANVAS_INFO
-			, "|>  'r' = Restart game     <|");
-		mvprintw(5, CANVAS_INFO
-			, "|>  'q' = Quit             <|");
-		mvprintw(6, CANVAS_INFO
-			, "|>                         <|");
-		mvprintw(7, CANVAS_INFO
-			, "|>                         <|");
-	}
-	
-	mvprintw(8, CANVAS_INFO
-		, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-	
-}
-
-void drawNextBlock()
+int isGameMoving()
 {
 	int x, y;
-	if (currentBlockInBatch == 6)
+	for (x = 0; x < 3; x++)
 	{
-		mvprintw(4, CANVAS_NEXT_START_X + 4, "?");
-	} else
-	{
-		for (x = 0; x < 3; x++)
+		for (y = 0; y < 3; y++)
 		{
-			for (y = 0; y < 3; y++)
+			if (currentBlock.blockType[x][y] != 0)
 			{
-				if (blockBatch[currentBlockInBatch]
-					.blockType[x][y] == 1)
-				{
-					mvprintw(y + 3, 
-						CANVAS_NEXT_START_X + x + 3
-						, "X");
-				}
+				return 1;
 			}
 		}
 	}
+	return 0;
 }
 
-void renderNextBlockFrame()
+void resetGame()
 {
-	int i;
+	timer = 0;
+	points = 0;
+	gameState = 0;
+	wait = 100000;
+	currentBlockInBatch = 0;
 
-	mvprintw(CANVAS_NEXT_START_Y
-		, CANVAS_NEXT_START_X
-		, " * NEXT *");
-	mvprintw(CANVAS_NEXT_START_Y + 1
-		, CANVAS_NEXT_START_X
-		, "*********");
+	resetBlock();
+	resetCanvas();
 	
-	for (i = 0; i < 3; i++)
-	{
-		mvprintw(i + 3
-			, CANVAS_NEXT_START_X
-			, "|>");
-		mvprintw(i + 3
-			, CANVAS_NEXT_START_X + 7
-			, "<|");
-	}
-
-	mvprintw(6
-		, CANVAS_NEXT_START_X
-		, "^^^^^^^^^");
+	createNewBlockBatch();
+	renderCanvas();
 }
 
-void drawScoreboard()
-{
-	mvprintw(CANVAS_SCORE_Y
-		, CANVAS_SCORE_X
-		, "  * SCORE *");
-	mvprintw(CANVAS_SCORE_Y + 1
-		, CANVAS_SCORE_X
-		, "*************");
-	mvprintw(CANVAS_SCORE_Y + 2
-		, CANVAS_SCORE_X
-		, "|>         <|");
-	
-	move(CANVAS_SCORE_Y + 2
-		, CANVAS_SCORE_X + 4);
-	printw("%d", points);
-	
-	mvprintw(CANVAS_SCORE_Y + 3
-		, CANVAS_SCORE_X
-		, "^^^^^^^^^^^^^");
-}
-
-void drawPauseScreen()
-{
-	mvprintw(CANVAS_HEIGHT / 2
-		, (CANVAS_WIDTH / 2) - 4
-		, "**********");
-	mvprintw(CANVAS_HEIGHT / 2 + 1
-		, (CANVAS_WIDTH / 2) - 4
-		, "* PAUSE  *");
-	mvprintw(CANVAS_HEIGHT / 2 + 2
-		, (CANVAS_WIDTH / 2) - 4
-		, "**********");
-}
-
-void drawGameOverScreen()
-{
-	mvprintw(CANVAS_HEIGHT / 2
-		, (CANVAS_WIDTH / 2) - 4
-		, "**********");
-	mvprintw(CANVAS_HEIGHT / 2 + 1
-		, (CANVAS_WIDTH / 2) - 4
-		, "GAME OVER!");
-	mvprintw(CANVAS_HEIGHT / 2 + 2
-		, (CANVAS_WIDTH / 2) - 4
-		, "**********");
-}
-
-void createFrame()
-{
-	noecho();
-	initscr();
-	curs_set(FALSE);
-	srand(time(NULL));
-	keypad(stdscr, TRUE);
-	nodelay(stdscr, TRUE);
-}
+/* Game : Level status */
 
 void checkRowCompletion()
 {
@@ -343,26 +244,6 @@ void increaseSpeed()
 	}
 }
 
-void printCanvasBlocks()
-{
-	int x, y;
-	
-	for (y = 1; y <= CANVAS_HEIGHT; y++)
-	{
-		for (x = 1; x <= CANVAS_WIDTH; x++)
-		{
-			if (canvas[x][y] == 0)
-			{
-				mvprintw(y, x,  " ");
-			}
-			else
-			{
-				mvprintw(y, x, "X");
-			}
-		}
-	}
-}
-
 void moveRowsAbove(int completedRow)
 {
 	int x, y;
@@ -375,21 +256,9 @@ void moveRowsAbove(int completedRow)
 	}
 }
 
-int isGameMoving()
-{
-	int x, y;
-	for (x = 0; x < 3; x++)
-	{
-		for (y = 0; y < 3; y++)
-		{
-			if (currentBlock.blockType[x][y] != 0)
-			{
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
+
+/* User interference */
+/* User interference : key input */
 
 void fetchUserInput()
 {
@@ -428,10 +297,11 @@ void fetchUserInput()
 				}
 				break;
 			case 'r':
-				// resetGame();
+				resetGame();
 				break;
 			case 'q':
 				inGame = 0;
+				break;
 		}
 	}
 
@@ -440,6 +310,10 @@ void fetchUserInput()
 		currentBlock = orgBlock;
 	}
 }
+
+
+/* Canvas */
+/* Canvas : map logic */
 
 int isCollision()
 {
@@ -462,74 +336,43 @@ int isCollision()
 	return 0;
 }
 
-/* Block logic */
+/* Canvas : Existence */
 
-void createNewBlockBatch()
-{
-	int i;
-	Block tempBlock;
-	
-	for (i = 0; i < 7; i++) 
-	{
-		do
-		{
-			tempBlock = createBlock(rand() % 7);
-		}
-		while (tempBlock.blockType ==
-				blockBatch[i].blockType);
-		blockBatch[i] = tempBlock;
-	}
-}
-
-void spawnNewBlock()
-{
-	if (isGameMoving() == 0)
-	{
-		if (currentBlockInBatch >= 6)
-		{
-			createNewBlockBatch();
-			currentBlockInBatch = 0;
-		}
-		currentBlock = blockBatch[currentBlockInBatch];
-		currentBlockInBatch++;
-	}
-	if (isCollision())
-	{
-		gameState = 2;
-	}
-}
-
-void setBlockInCanvas()
+void resetCanvas()
 {
 	int x, y;
-	
-	for (x = 0; x < 3; x++)
+	for (y = 1; y <= CANVAS_HEIGHT; y++)
 	{
-		for (y = 0; y < 3; y++)
+		for (x = 1; x <= CANVAS_WIDTH; x++)
 		{
-			if (currentBlock.blockType[x][y] != 0)
-			{
-				canvas[currentBlock.position.x + x]
-					[currentBlock.position.y + y] = 1;
-			}
+			canvas[x][y] = 0;
 		}
 	}
 }
 
-void renderBlock()
+
+/* Blocks */
+/* Blocks : Movement */
+
+void moveLeft()
 {
-	int x, y;
-	
-	for (x = 0; x < 3; x++)
-	{
-		for (y = 0; y < 3; y++)
-		{
-			if (currentBlock.blockType[x][y] == 1)
-			{
-				mvprintw(currentBlock.position.y + y, 
-					currentBlock.position.x + x, "X");
-			}
-		}
+	currentBlock.position.x--;
+}
+
+void moveRight()
+{
+	currentBlock.position.x++;
+}
+
+void moveDown()
+{
+	currentBlock.position.y++;
+
+	if (isCollision() == 1)
+	{		
+		currentBlock.position.y--;
+		setBlockInCanvas();
+		resetBlock();
 	}
 }
 
@@ -547,6 +390,8 @@ void rotateBlock()
 		}
 	}
 }
+
+/* Blocks : Existence */
 
 Block createBlock(int blockNumber)
 {
@@ -601,28 +446,6 @@ Block createBlock(int blockNumber)
 	return tempBlock;
 }
 
-void moveLeft()
-{
-	currentBlock.position.x--;
-}
-
-void moveRight()
-{
-	currentBlock.position.x++;
-}
-
-void moveDown()
-{
-	currentBlock.position.y++;
-
-	if (isCollision() == 1)
-	{		
-		currentBlock.position.y--;
-		setBlockInCanvas();
-		resetBlock();
-	}
-}
-
 void resetBlock()
 {
 	int x, y;
@@ -637,4 +460,278 @@ void resetBlock()
 			}
 		}
 	}
+}
+
+void createNewBlockBatch()
+{
+	int i;
+	Block tempBlock;
+	
+	for (i = 0; i < 7; i++) 
+	{
+		do
+		{
+			tempBlock = createBlock(rand() % 7);
+		}
+		while (tempBlock.blockType ==
+				blockBatch[i].blockType);
+		blockBatch[i] = tempBlock;
+	}
+}
+
+void spawnNewBlock()
+{
+	if (isGameMoving() == 0)
+	{
+		if (currentBlockInBatch >= 6)
+		{
+			createNewBlockBatch();
+			currentBlockInBatch = 0;
+		}
+		currentBlock = blockBatch[currentBlockInBatch];
+		currentBlockInBatch++;
+	}
+	if (isCollision())
+	{
+		gameState = 2;
+	}
+}
+
+void setBlockInCanvas()
+{
+	int x, y;
+	
+	for (x = 0; x < 3; x++)
+	{
+		for (y = 0; y < 3; y++)
+		{
+			if (currentBlock.blockType[x][y] != 0)
+			{
+				canvas[currentBlock.position.x + x]
+					[currentBlock.position.y + y] = 1;
+			}
+		}
+	}
+}
+
+
+/* Graphics */
+/* Graphics : Setup */
+
+void createFrame()
+{
+	noecho();
+	initscr();
+	curs_set(FALSE);
+	srand(time(NULL));
+	keypad(stdscr, TRUE);
+	nodelay(stdscr, TRUE);
+}
+
+/* Graphics : Canvas content */
+
+void printCanvasBlocks()
+{
+	int x, y;
+	
+	for (y = 1; y <= CANVAS_HEIGHT; y++)
+	{
+		for (x = 1; x <= CANVAS_WIDTH; x++)
+		{
+			if (canvas[x][y] == 0)
+			{
+				mvprintw(y, x,  " ");
+			}
+			else
+			{
+				mvprintw(y, x, "X");
+			}
+		}
+	}
+}
+
+void renderBlock()
+{
+	int x, y;
+	
+	for (x = 0; x < 3; x++)
+	{
+		for (y = 0; y < 3; y++)
+		{
+			if (currentBlock.blockType[x][y] == 1)
+			{
+				mvprintw(currentBlock.position.y + y, 
+					currentBlock.position.x + x, "X");
+			}
+		}
+	}
+}
+
+/* Graphics : frames */
+
+void renderCanvas()
+{
+	clear();
+	checkGameState();
+	refresh();
+}
+
+void renderFrame()
+{
+	int x, y;
+	
+	for (y = 0; y <= CANVAS_HEIGHT + 1; y++)
+	{
+		for (x = 0; x <= CANVAS_WIDTH + 1; x++)
+		{
+			if (y == 0 || y == CANVAS_HEIGHT + 1)
+			{
+				canvas[x][y] = 1;
+				mvprintw(y, x, "#");
+			} else if (x == 0 || x == CANVAS_WIDTH + 1)
+			{
+				canvas[x][y] = 1;
+				mvprintw(y, x, "|");
+			}
+		}
+	}
+}
+
+void drawInstructions()
+{
+	mvprintw(1, CANVAS_INFO
+		, "      * INFORMATION *");
+	mvprintw(2, CANVAS_INFO
+		, "*****************************");
+		
+	if (gameState == 0)
+	{
+		mvprintw(3, CANVAS_INFO
+			, "|>     KEY UP = Rotate     <|");
+		mvprintw(4, CANVAS_INFO
+			, "|>   KEY DOWN = Speed up   <|");
+		mvprintw(5, CANVAS_INFO
+			, "|>   KEY LEFT = Move left  <|");
+		mvprintw(6, CANVAS_INFO
+			, "|>  KEY RIGHT = Move right <|");
+		mvprintw(7, CANVAS_INFO
+			, "|>        'p' = Pause game <|");
+	} else
+	{
+		mvprintw(3, CANVAS_INFO
+			, "|>  'p' = Unpause game     <|");
+		mvprintw(4, CANVAS_INFO
+			, "|>  'r' = Restart game     <|");
+		mvprintw(5, CANVAS_INFO
+			, "|>  'q' = Quit             <|");
+		mvprintw(6, CANVAS_INFO
+			, "|>                         <|");
+		mvprintw(7, CANVAS_INFO
+			, "|>                         <|");
+	}
+	
+	mvprintw(8, CANVAS_INFO
+		, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+	
+}
+
+void renderNextBlockFrame()
+{
+	int i;
+
+	mvprintw(CANVAS_NEXT_START_Y
+		, CANVAS_NEXT_START_X
+		, " * NEXT *");
+	mvprintw(CANVAS_NEXT_START_Y + 1
+		, CANVAS_NEXT_START_X
+		, "*********");
+	
+	for (i = 0; i < 3; i++)
+	{
+		mvprintw(i + 3
+			, CANVAS_NEXT_START_X
+			, "|>");
+		mvprintw(i + 3
+			, CANVAS_NEXT_START_X + 7
+			, "<|");
+	}
+
+	mvprintw(6
+		, CANVAS_NEXT_START_X
+		, "^^^^^^^^^");
+}
+
+void drawScoreboard()
+{
+	mvprintw(CANVAS_SCORE_Y
+		, CANVAS_SCORE_X
+		, "  * SCORE *");
+	mvprintw(CANVAS_SCORE_Y + 1
+		, CANVAS_SCORE_X
+		, "*************");
+	mvprintw(CANVAS_SCORE_Y + 2
+		, CANVAS_SCORE_X
+		, "|>         <|");
+	
+	move(CANVAS_SCORE_Y + 2
+		, CANVAS_SCORE_X + 5);
+	printw("%d", points);
+	
+	mvprintw(CANVAS_SCORE_Y + 3
+		, CANVAS_SCORE_X
+		, "^^^^^^^^^^^^^");
+}
+
+/* Graphics : Side content */
+
+void drawNextBlock()
+{
+	int x, y;
+	if (currentBlockInBatch == 6)
+	{
+		mvprintw(4, CANVAS_NEXT_START_X + 4, "?");
+	} else
+	{
+		for (x = 0; x < 3; x++)
+		{
+			for (y = 0; y < 3; y++)
+			{
+				if (blockBatch[currentBlockInBatch]
+					.blockType[x][y] == 1)
+				{
+					mvprintw(y + 3, 
+						CANVAS_NEXT_START_X + x + 3
+						, "X");
+				}
+			}
+		}
+	}
+}
+
+/* Graphics : Extra screens */
+
+void drawPauseScreen()
+{
+	mvprintw(CANVAS_HEIGHT / 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
+	mvprintw(CANVAS_HEIGHT / 2 + 1
+		, (CANVAS_WIDTH / 2) - 4
+		, "* PAUSE  *");
+	mvprintw(CANVAS_HEIGHT / 2 + 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
+}
+
+void drawGameOverScreen()
+{
+	mvprintw(CANVAS_HEIGHT / 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
+	mvprintw(CANVAS_HEIGHT / 2 + 1
+		, (CANVAS_WIDTH / 2) - 4
+		, "GAME OVER!");
+	mvprintw(CANVAS_HEIGHT / 2 + 2
+		, (CANVAS_WIDTH / 2) - 4
+		, "**********");
 }

@@ -6,14 +6,15 @@
 // Mulig lage variabler av disse??
 #define CANVAS_WIDTH 10
 #define CANVAS_HEIGHT 20
+#define BLOCK_SIGN "O"
 
 #define CANVAS_NEXT_START_Y 1
 #define CANVAS_NEXT_START_X CANVAS_WIDTH + 7
 
-#define CANVAS_SCORE_X CANVAS_NEXT_START_X - 1
+#define CANVAS_SCORE_X CANVAS_NEXT_START_X - 2
 #define CANVAS_SCORE_Y CANVAS_NEXT_START_Y + 6
 
-#define CANVAS_INFO CANVAS_SCORE_X + 20
+#define CANVAS_INFO CANVAS_SCORE_X + 17
 
 typedef struct Position
 {
@@ -25,6 +26,7 @@ typedef struct Block
 {
 	int blockType[3][3];
 	Position position;
+	int color;
 } Block;
 
 typedef int Canvas[CANVAS_WIDTH + 1][CANVAS_HEIGHT + 1];
@@ -85,6 +87,7 @@ void setBlockInCanvas();
 /* Graphics */
 /* Graphics : Setup */
 void createFrame();
+void setupColors();
 
 /* Graphics : Canvas content */
 void printCanvasBlocks();
@@ -123,7 +126,7 @@ int main(int argc, char ** argv)
 			&& gameState == 0) {
 			moveDown();
 		}
-
+		
 		renderCanvas();
 		usleep(wait);
 	}
@@ -386,7 +389,7 @@ void rotateBlock()
 		for (j = 0; j < 3; j++)
 		{
 			currentBlock.blockType[i][j] 
-				= tempBlock.blockType[2 - j][i];
+				= tempBlock.blockType[j][2 - i];
 		}
 	}
 }
@@ -440,6 +443,7 @@ Block createBlock(int blockNumber)
 
 	memcpy(tempBlock.blockType, b, sizeof(Block));
 
+	tempBlock.color = blockNumber + 1;
 	tempBlock.position.x = (CANVAS_WIDTH / 2) - 1;
 	tempBlock.position.y = 1;
 	
@@ -508,7 +512,8 @@ void setBlockInCanvas()
 			if (currentBlock.blockType[x][y] != 0)
 			{
 				canvas[currentBlock.position.x + x]
-					[currentBlock.position.y + y] = 1;
+					[currentBlock.position.y + y] 
+					= currentBlock.color;
 			}
 		}
 	}
@@ -521,11 +526,25 @@ void setBlockInCanvas()
 void createFrame()
 {
 	noecho();
+	cbreak();
 	initscr();
+	start_color();
+	setupColors();
 	curs_set(FALSE);
 	srand(time(NULL));
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
+}
+
+void setupColors()
+{
+	init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_GREEN, COLOR_BLACK);	
+    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(4, COLOR_BLUE, COLOR_BLACK);
+    init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(6, COLOR_CYAN, COLOR_BLACK);
+    init_pair(7, COLOR_WHITE, COLOR_BLACK);
 }
 
 /* Graphics : Canvas content */
@@ -544,7 +563,9 @@ void printCanvasBlocks()
 			}
 			else
 			{
-				mvprintw(y, x, "X");
+				attron(COLOR_PAIR(canvas[x][y]));
+				mvprintw(y, x, BLOCK_SIGN);
+				attron(COLOR_PAIR(7));
 			}
 		}
 	}
@@ -560,8 +581,10 @@ void renderBlock()
 		{
 			if (currentBlock.blockType[x][y] == 1)
 			{
+				attron(COLOR_PAIR(currentBlock.color));
 				mvprintw(currentBlock.position.y + y, 
-					currentBlock.position.x + x, "X");
+					currentBlock.position.x + x, BLOCK_SIGN);
+				attron(COLOR_PAIR(7));
 			}
 		}
 	}
@@ -600,7 +623,7 @@ void renderFrame()
 void drawInstructions()
 {
 	mvprintw(1, CANVAS_INFO
-		, "      * INFORMATION *");
+		, "       * INFORMATION *");
 	mvprintw(2, CANVAS_INFO
 		, "*****************************");
 		
@@ -632,7 +655,6 @@ void drawInstructions()
 	
 	mvprintw(8, CANVAS_INFO
 		, "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-	
 }
 
 void renderNextBlockFrame()
@@ -699,9 +721,11 @@ void drawNextBlock()
 				if (blockBatch[currentBlockInBatch]
 					.blockType[x][y] == 1)
 				{
+					attron(COLOR_PAIR(blockBatch[currentBlockInBatch].color));				
 					mvprintw(y + 3, 
 						CANVAS_NEXT_START_X + x + 3
-						, "X");
+						, BLOCK_SIGN);
+					attron(COLOR_PAIR(7));
 				}
 			}
 		}

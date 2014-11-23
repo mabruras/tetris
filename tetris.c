@@ -245,7 +245,7 @@ void increaseSpeed()
 		wait = 10000;
 	} else
 	{
-		wait -= 500;
+		wait -= 750;
 	}
 }
 
@@ -267,7 +267,9 @@ void moveRowsAbove(int completedRow)
 
 void fetchUserInput()
 {
+
 	Block orgBlock = currentBlock;
+
 	if (gameState == 0)
 	{
 		switch (getch())
@@ -488,7 +490,7 @@ void createNewBlockBatch()
 int batchContainsBlock(Block b, int iMax)
 {
 	int i;
-	for (i = 0; i <= iMax; i++)
+	for (i = 0; i < iMax; i++)
 	{
 		if (b.color == blockBatch[i].color)
 		{
